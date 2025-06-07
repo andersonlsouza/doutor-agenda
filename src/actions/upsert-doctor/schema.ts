@@ -11,24 +11,24 @@ export const upsertDoctorSchema = z
     appointmentPriceInCents: z
       .number()
       .min(1, { message: "Preço da consulta é obrigatório" }),
-    avaliableFromWeekday: z.number().min(0).max(6),
-    avaliableToWeekday: z.number().min(0).max(6),
-    avaliableFromTime: z
+    availableFromWeekday: z.number().min(0).max(6),
+    availableToWeekday: z.number().min(0).max(6),
+    availableFromTime: z
       .string()
       .trim()
       .min(1, { message: "Hora de início é obrigatória" }),
-    avaliableToTime: z
+    availableToTime: z
       .string()
       .trim()
       .min(1, { message: "Hora de término é obrigatória" }),
   })
   .refine(
     (data) => {
-      return data.avaliableFromTime < data.avaliableToTime;
+      return data.availableFromTime < data.availableToTime;
     },
     {
       message: "Horário de término não pode ser anterior ao horário de início",
-      path: ["avaliableToTime"],
+      path: ["availableToTime"],
     },
   );
 

@@ -45,31 +45,31 @@ const formSchema = z
     appointmentPrice: z
       .number()
       .min(1, { message: "Preço da consulta é obrigatório" }),
-    avaliableFromWeekday: z
+    availableFromWeekday: z
       .string()
       .min(1, { message: "Dia da semana é obrigatório" }),
-    avaliableToWeekday: z
+    availableToWeekday: z
       .string()
       .min(1, { message: "Dia da semana é obrigatório" }),
-    avaliableFromTime: z
+    availableFromTime: z
       .string()
       .trim()
       .min(1, { message: "Hora de início é obrigatória" }),
-    avaliableToTime: z
+    availableToTime: z
       .string()
       .trim()
       .min(1, { message: "Hora de término é obrigatória" }),
   })
   .refine(
     (data) => {
-      if (data.avaliableFromTime < data.avaliableToTime) {
+      if (data.availableFromTime < data.availableToTime) {
         return true;
       }
       return false;
     },
     {
       message: "Horário de término não pode ser anterior ao horário de início",
-      path: ["avaliableToTime"],
+      path: ["availableToTime"],
     },
   );
 
@@ -84,10 +84,10 @@ const UpsertDoctorForm = ({ onSuccess }: UpsertDoctorFormProps) => {
       name: "",
       specialty: "",
       appointmentPrice: 0,
-      avaliableFromWeekday: "1",
-      avaliableToWeekday: "5",
-      avaliableFromTime: "",
-      avaliableToTime: "",
+      availableFromWeekday: "1",
+      availableToWeekday: "5",
+      availableFromTime: "",
+      availableToTime: "",
     },
   });
 
@@ -104,8 +104,8 @@ const UpsertDoctorForm = ({ onSuccess }: UpsertDoctorFormProps) => {
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     upsertDoctorAction.execute({
       ...values,
-      avaliableFromWeekday: parseInt(values.avaliableFromWeekday),
-      avaliableToWeekday: parseInt(values.avaliableToWeekday),
+      availableFromWeekday: parseInt(values.availableFromWeekday),
+      availableToWeekday: parseInt(values.availableToWeekday),
       appointmentPriceInCents: values.appointmentPrice * 100,
     });
   };
@@ -184,7 +184,7 @@ const UpsertDoctorForm = ({ onSuccess }: UpsertDoctorFormProps) => {
           />
           <FormField
             control={form.control}
-            name="avaliableFromWeekday"
+            name="availableFromWeekday"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Dia inicial da disponibilidade</FormLabel>
@@ -213,7 +213,7 @@ const UpsertDoctorForm = ({ onSuccess }: UpsertDoctorFormProps) => {
           />
           <FormField
             control={form.control}
-            name="avaliableToWeekday"
+            name="availableToWeekday"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Dia final de disponibilidade</FormLabel>
@@ -242,7 +242,7 @@ const UpsertDoctorForm = ({ onSuccess }: UpsertDoctorFormProps) => {
           />
           <FormField
             control={form.control}
-            name="avaliableFromTime"
+            name="availableFromTime"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Horário inicial de disponibilidade</FormLabel>
@@ -311,7 +311,7 @@ const UpsertDoctorForm = ({ onSuccess }: UpsertDoctorFormProps) => {
           />
           <FormField
             control={form.control}
-            name="avaliableToTime"
+            name="availableToTime"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Horário final de disponibilidade</FormLabel>
