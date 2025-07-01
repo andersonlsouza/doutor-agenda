@@ -1,14 +1,28 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { TrashIcon } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { NumericFormat } from "react-number-format";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { deletePatient } from "@/actions/delete-patient";
 import { upsertPatient } from "@/actions/upsert-patient";
 import { upsertPatientSchema } from "@/actions/upsert-patient/schema";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   DialogContent,
   DialogDescription,
@@ -32,42 +46,90 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { patientsTable } from "@/db/schema";
 
 interface UpsertPatientFormProps {
+  patient?: typeof patientsTable.$inferSelect;
   onSuccess?: () => void;
+  isOpen: boolean;
 }
 
-const UpsertPatientForm = ({ onSuccess }: UpsertPatientFormProps) => {
+const UpsertPatientForm = ({
+  patient,
+  onSuccess,
+  isOpen,
+}: UpsertPatientFormProps) => {
   const form = useForm<z.infer<typeof upsertPatientSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(upsertPatientSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      sex: undefined,
+      id: patient?.id || undefined,
+      name: patient?.name || "",
+      email: patient?.email || "",
+      phone: patient?.phone || "",
+      sex: patient?.sex || undefined,
     },
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        name: patient?.name || "",
+        email: patient?.email || "",
+        phone: patient?.phone || "",
+        sex: patient?.sex || undefined,
+      });
+    }
+  }, [isOpen, form, patient]);
 
   const upsertPatientAction = useAction(upsertPatient, {
     onSuccess: () => {
-      toast.success("Paciente adicionado com sucesso");
+      toast.success(
+        patient
+          ? "Paciente atualizado com sucesso"
+          : "Paciente adicionado com sucesso",
+      );
       onSuccess?.();
     },
     onError: () => {
-      toast.error("Erro ao adicionar paciente");
+      toast.error("Erro ao salvar paciente");
     },
   });
 
+  const deletePatientAction = useAction(deletePatient, {
+    onSuccess: () => {
+      toast.success("Paciente deletado com sucesso");
+      onSuccess?.();
+    },
+    onError: () => {
+      toast.error("Erro ao deletar paciente");
+    },
+  });
+
+  const handleDeletePatient = () => {
+    if (!patient) return;
+
+    deletePatientAction.execute({ id: patient.id });
+  };
+
   const onSubmit = (values: z.infer<typeof upsertPatientSchema>) => {
-    upsertPatientAction.execute(values);
+    upsertPatientAction.execute({
+      ...values,
+      id: patient?.id,
+    });
   };
 
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Adicionar paciente</DialogTitle>
-        <DialogDescription>Preencha os dados do paciente</DialogDescription>
+        <DialogTitle>
+          {patient ? "Editar paciente" : "Adicionar paciente"}
+        </DialogTitle>
+        <DialogDescription>
+          {patient
+            ? "Edite os dados do paciente"
+            : "Preencha os dados do paciente"}
+        </DialogDescription>
       </DialogHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -104,15 +166,7 @@ const UpsertPatientForm = ({ onSuccess }: UpsertPatientFormProps) => {
               <FormItem>
                 <FormLabel>Número de telefone</FormLabel>
                 <FormControl>
-                  <NumericFormat
-                    customInput={Input}
-                    format="(##) #####-####"
-                    allowEmptyFormatting
-                    mask="_"
-                    {...field}
-                    value={field.value || ""}
-                    onValueChange={(values) => field.onChange(values.value)}
-                  />
+                  <Input type="tel" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -143,15 +197,43 @@ const UpsertPatientForm = ({ onSuccess }: UpsertPatientFormProps) => {
             )}
           />
           <DialogFooter>
-            <button
+            {patient && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline">
+                    <TrashIcon />
+                    Deletar paciente
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Tem certeza que deseja deletar esse paciente?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Essa ação não pode ser desfeita. Isso irá deletar o
+                      paciente e remover todas as consultas agendadas.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeletePatient}>
+                      Deletar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Button
               type="submit"
-              className="bg-primary hover:bg-primary/90 w-full rounded-md px-4 py-2 text-white transition-colors"
               disabled={upsertPatientAction.status === "executing"}
             >
               {upsertPatientAction.status === "executing"
                 ? "Salvando..."
-                : "Salvar"}
-            </button>
+                : patient
+                  ? "Atualizar"
+                  : "Salvar"}
+            </Button>
           </DialogFooter>
         </form>
       </Form>
