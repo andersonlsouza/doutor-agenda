@@ -9,7 +9,7 @@ import * as schema from "@/db/schema";
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg", // or "pg" or "mysql"
-    usePlural: true,
+    // usePlural: true,
     schema,
   }),
   socialProviders: {
